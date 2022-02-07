@@ -1,0 +1,46 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+
+
+-   repo: https://github.com/ambv/black
+    rev: 21.9b0
+    hooks:
+    - id: black
+      language: python
+      types: [python]
+
+
+-   repo: https://github.com/myint/autoflake/
+    rev: v1.4
+    hooks:
+    - id: autoflake
+      language: python
+      args:
+        [
+          "--in-place",
+          "--remove-all-unused-imports",
+          "--remove-unused-variables",
+          "--expand-star-imports",
+          "--ignore-init-module-imports",
+        ]
+      files: \.py$
+
+-   repo: https://github.com/PyCQA/isort
+    rev: 5.10.1
+    hooks:
+    - id: isort
+      language: python
+      args: ["--filter-files"]
+      files: \.py$
+
+-   repo: https://github.com/econchick/interrogate
+    rev: 1.5.0
+    hooks:
+    - id: interrogate
+      args: [-vv, --fail-under=80]
