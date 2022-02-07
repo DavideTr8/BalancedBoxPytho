@@ -31,13 +31,6 @@ repos:
         ]
       files: \.py$
 
-#-   repo: https://github.com/PyCQA/isort
-#    rev: 5.10.1
-#    hooks:
-#    - id: isort
-#      language: python
-#      args: ["--filter-files"]
-#      files: \.py$
 
 #-   repo: https://github.com/econchick/interrogate
 #    rev: 1.5.0
