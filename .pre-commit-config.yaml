@@ -1,5 +1,5 @@
 repos:
--     repo: https://github.com/pre-commit/pre-commit-hooks
+-   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
     -   id: trailing-whitespace
@@ -31,16 +31,16 @@ repos:
         ]
       files: \.py$
 
--   repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-    - id: isort
-      language: python
-      args: ["--filter-files"]
-      files: \.py$
+#-   repo: https://github.com/PyCQA/isort
+#    rev: 5.10.1
+#    hooks:
+#    - id: isort
+#      language: python
+#      args: ["--filter-files"]
+#      files: \.py$
 
--   repo: https://github.com/econchick/interrogate
-    rev: 1.5.0
-    hooks:
-    - id: interrogate
-      args: [-vv, --fail-under=80]
+#-   repo: https://github.com/econchick/interrogate
+#    rev: 1.5.0
+#    hooks:
+#    - id: interrogate
+#      args: [-vv, --fail-under=80]

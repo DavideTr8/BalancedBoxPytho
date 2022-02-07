@@ -1,7 +1,11 @@
-import pyomo.environ as pyo
 from copy import deepcopy
 
-def find_lexmin(model: pyo.ConcreteModel, objective_order: tuple, opt: pyo.SolverFactory) -> pyo.ConcreteModel:
+import pyomo.environ as pyo
+
+
+def find_lexmin(
+    model: pyo.ConcreteModel, objective_order: tuple, opt: pyo.SolverFactory
+) -> pyo.ConcreteModel:
     """
     Finds the lexmin of a biobjective minimization problem's model wrote in Pyomo where both objectives are defined as
     model.objective1 and model.objective2
@@ -20,7 +24,9 @@ def find_lexmin(model: pyo.ConcreteModel, objective_order: tuple, opt: pyo.Solve
 
         opt.solve(model_copy)
 
-        model_copy.objective_constraint = pyo.Constraint(expr=model_copy.objective1.expr <= pyo.value(model_copy.objective1))
+        model_copy.objective_constraint = pyo.Constraint(
+            expr=model_copy.objective1.expr <= pyo.value(model_copy.objective1)
+        )
 
         model_copy.objective1.deactivate()
         model_copy.objective2.activate()
@@ -33,7 +39,9 @@ def find_lexmin(model: pyo.ConcreteModel, objective_order: tuple, opt: pyo.Solve
 
         opt.solve(model_copy)
 
-        model_copy.objective_constraint = pyo.Constraint(expr=model_copy.objective2.expr <= pyo.value(model_copy.objective2))
+        model_copy.objective_constraint = pyo.Constraint(
+            expr=model_copy.objective2.expr <= pyo.value(model_copy.objective2)
+        )
 
         model_copy.objective2.deactivate()
         model_copy.objective1.activate()

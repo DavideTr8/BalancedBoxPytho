@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+
 from Rectangle import Rectangle
 
 q = PriorityQueue()

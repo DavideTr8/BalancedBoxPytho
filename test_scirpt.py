@@ -5,36 +5,46 @@ Authors: Antony Phillips, Dr Stuart Mitchell  2007
 """
 
 # Import PuLP modeler functions
-from pulp import *
+from pulp import (
+    LpInteger,
+    LpMinimize,
+    LpProblem,
+    LpStatus,
+    LpVariable,
+    lpSum,
+    makeDict,
+    value,
+)
 
 # Creates a list of all the supply nodes
 Warehouses = ["A", "B"]
 
 # Creates a dictionary for the number of units of supply for each supply node
-supply = {"A": 4000,
-          "B": 4000}
+supply = {"A": 4000, "B": 4000}
 
 # Creates a list of all demand nodes
 Bars = ["1", "2", "3", "4", "5"]
 
 # Creates a dictionary for the number of units of demand for each demand node
-demand = {"1": 500,
-          "2": 900,
-          "3": 1800,
-          "4": 200,
-          "5": 700, }
+demand = {
+    "1": 500,
+    "2": 900,
+    "3": 1800,
+    "4": 200,
+    "5": 700,
+}
 
 # Creates a list of costs of each transportation path
 costs1 = [  # Bars
     # 1 2 3 4 5
     [2, 4, 3, 2, 1],  # A   Warehouses
-    [2, 4, 3, 2, 1]  # B
+    [2, 4, 3, 2, 1],  # B
 ]
 
 costs2 = [  # Bars
     # 1 2 3 4 5
     [10, 2, 30, 30, 30],  # A   Warehouses
-    [0, 0, 0, 0, 0]  # B
+    [0, 0, 0, 0, 0],  # B
 ]
 
 # The cost data is made into a dictionary
@@ -52,11 +62,17 @@ vars = LpVariable.dicts("Route", (Warehouses, Bars), 0, None, LpInteger)
 
 # The supply maximum constraints are added to prob for each supply node (warehouse)
 for w in Warehouses:
-    prob += lpSum([vars[w][b] for b in Bars]) <= supply[w], "Sum_of_Products_out_of_Warehouse_%s" % w
+    prob += (
+        lpSum([vars[w][b] for b in Bars]) <= supply[w],
+        "Sum_of_Products_out_of_Warehouse_%s" % w,
+    )
 
 # The demand minimum constraints are added to prob for each demand node (bar)
 for b in Bars:
-    prob += lpSum([vars[w][b] for w in Warehouses]) >= demand[b], "Sum_of_Products_into_Bar%s" % b
+    prob += (
+        lpSum([vars[w][b] for w in Warehouses]) >= demand[b],
+        "Sum_of_Products_into_Bar%s" % b,
+    )
 
 
 # The objective function is added to 'prob' first
