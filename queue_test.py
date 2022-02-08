@@ -12,5 +12,8 @@ q.put((-a.area, a))
 q.put((-b.area, b))
 q.put((-d.area, d))
 
-c = q.get()
-print(id(b), id(d), id(c))
+for _ in range(4):
+    if q.empty():
+        break
+    c = q.get()
+    print(id(b), id(d), id(c))
