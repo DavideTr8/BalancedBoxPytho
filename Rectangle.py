@@ -1,5 +1,12 @@
+import math
+
+
 class Rectangle:
-    def __init__(self, topleft: tuple[float], botright: tuple[float]):
+    def __init__(
+        self,
+        topleft: tuple[float] = (-math.inf, math.inf),
+        botright: tuple[float] = (math.inf, -math.inf),
+    ):
         self.topleft = topleft
         self.botright = botright
 
@@ -7,6 +14,13 @@ class Rectangle:
         return self.area < other.area
 
     def split_horizontally(self):
+        assert not math.isinf(self.topleft[1]), ValueError(
+            "Can't find the midpoint of infinity"
+        )
+        assert not math.isinf(self.botright[1]), ValueError(
+            "Can't find the midpoint of infinity"
+        )
+
         midpoint = (self.topleft[1] + self.botright[1]) / 2
         return (
             Rectangle(self.topleft, (self.botright[0], midpoint)),
