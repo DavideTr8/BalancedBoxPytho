@@ -2,6 +2,9 @@ from parsing import Bomip2dkp, Path, pyo
 from lexmin import find_lexmin
 from queue import PriorityQueue
 from Rectangle import Rectangle
+import logging
+
+logging.basicConfig(level=20)
 
 EPS = 1  # epsilon for when splitting a rectangle
 
@@ -36,14 +39,14 @@ while not pq.empty():
     searching_rectangle = pq.get()[1]
     _, r_b = searching_rectangle.split_horizontally()
     z1, z2 = r_b.topleft, r_b.botright
-    z1_bar = find_lexmin(model, (1, 2), opt, rectangle=r_b)
+    z1_bar = find_lexmin(model, (1, 2), opt, rectangle=r_b, verbose=True)
     if z1_bar != z2:
         solutions_list.append(z1_bar)
         new_rect = Rectangle(z1_bar, z2)
         pq.put((-new_rect.area, new_rect))
 
     r_t = Rectangle(z1, (z1_bar[0] - EPS, (z1[1] + z2[1]) / 2))
-    z2_bar = find_lexmin(model, (2, 1), opt, rectangle=r_t)
+    z2_bar = find_lexmin(model, (2, 1), opt, rectangle=r_t, verbose=True)
 
     if z2_bar != z1:
         solutions_list.append(z2_bar)
@@ -51,3 +54,5 @@ while not pq.empty():
         pq.put((-new_rect.area, new_rect))
 
     iteration += 1
+    if iteration == 5:
+        break

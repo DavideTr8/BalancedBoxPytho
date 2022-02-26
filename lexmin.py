@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 
 import pyomo.environ as pyo
 
@@ -10,6 +11,7 @@ def find_lexmin(
     objective_order: tuple,
     opt: pyo.SolverFactory,
     rectangle=Rectangle(),
+    verbose=False,
 ) -> pyo.ConcreteModel:
     """
     Finds the lexmin of a biobjective minimization problem's model wrote in Pyomo where both objectives are defined as
@@ -22,20 +24,22 @@ def find_lexmin(
         Solver for the model.
     :param rectangle: Rectangle,
         Rectange in which the optimization is constrained.
+    :param verbose: bool (optional),
+        Print the output of the solver.
     :return: pyo.ConcreteModel
     """
     model_copy = deepcopy(model)
 
-    model.ztop_cstr_x = pyo.Constraint(
+    model_copy.ztop_cstr_x = pyo.Constraint(
         expr=model_copy.objective1.expr >= rectangle.topleft[0]
     )
-    model.ztop_cstr_y = pyo.Constraint(
+    model_copy.ztop_cstr_y = pyo.Constraint(
         expr=model_copy.objective2.expr <= rectangle.topleft[1]
     )
-    model.zbot_cstr_x = pyo.Constraint(
+    model_copy.zbot_cstr_x = pyo.Constraint(
         expr=model_copy.objective1.expr <= rectangle.botright[0]
     )
-    model.ztop_cstr_y = pyo.Constraint(
+    model_copy.zbot_cstr_y = pyo.Constraint(
         expr=model_copy.objective2.expr >= rectangle.botright[1]
     )
 
@@ -43,7 +47,10 @@ def find_lexmin(
         model_copy.objective1.activate()
         model_copy.objective2.deactivate()
 
-        opt.solve(model_copy)
+        logging.info(
+            f"Solving the first problem in lexmin with order {objective_order}"
+        )
+        opt.solve(model_copy, tee=verbose)
 
         model_copy.objective_constraint = pyo.Constraint(
             expr=model_copy.objective1.expr <= pyo.value(model_copy.objective1)
@@ -51,14 +58,19 @@ def find_lexmin(
 
         model_copy.objective1.deactivate()
         model_copy.objective2.activate()
-
-        opt.solve(model_copy)
+        logging.info(
+            f"Solving the second problem in lexmin with order {objective_order}"
+        )
+        opt.solve(model_copy, tee=verbose)
 
     elif objective_order == (2, 1):
         model_copy.objective2.activate()
         model_copy.objective1.deactivate()
 
-        opt.solve(model_copy)
+        logging.info(
+            f"Solving the first problem in lexmin with order {objective_order}"
+        )
+        opt.solve(model_copy, tee=verbose)
 
         model_copy.objective_constraint = pyo.Constraint(
             expr=model_copy.objective2.expr <= pyo.value(model_copy.objective2)
@@ -67,7 +79,10 @@ def find_lexmin(
         model_copy.objective2.deactivate()
         model_copy.objective1.activate()
 
-        opt.solve(model_copy)
+        logging.info(
+            f"Solving the second problem in lexmin with order {objective_order}"
+        )
+        opt.solve(model_copy, tee=verbose)
 
     else:
         raise ValueError("The objective order provided isn't accepted")
