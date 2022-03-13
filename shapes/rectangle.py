@@ -13,19 +13,6 @@ class Rectangle(Shape):
     def __lt__(self, other):
         return self.area < other.area
 
-    def split_horizontally(self):
-        assert not math.isinf(self.topleft[1]), ValueError(
-            "Can't find the midpoint of infinity"
-        )
-        assert not math.isinf(self.botright[1]), ValueError(
-            "Can't find the midpoint of infinity"
-        )
-
-        return (
-            Rectangle(self.topleft, (self.botright[0], self.vertical_midpoint)),
-            Rectangle((self.topleft[0], self.vertical_midpoint), self.botright),
-        )
-
     @property
     def area(self):
         x1 = self.topleft[0]

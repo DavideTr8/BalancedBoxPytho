@@ -146,6 +146,7 @@ def line_detector(model, opt, triangle):
         expr=model_copy.objective2_2.expr <= triangle.botright[1]
     )
 
+    logging.info(f"Solving the line detector model.")
     res = opt.solve(model_copy)
 
     return res.Solver.Termination_condition == "optimal"

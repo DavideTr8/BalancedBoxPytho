@@ -119,7 +119,7 @@ class Bomip2C(pyo.ConcreteModel):
         f1: list[int],
         c2: list[int],
         f2: list[int],
-        a: list[list[int]],
+        a: dict[tuple[int, int], int],
         a_prime: list[int],
         b: list[int],
     ):

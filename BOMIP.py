@@ -8,7 +8,7 @@ import logging
 
 logging.basicConfig(level=20)
 
-EPS = 0.1  # epsilon for when splitting a rectangle
+EPS = 0.01  # epsilon for when splitting a rectangle
 
 dataset_path = Path("./BOMIP/Part II- Mixed Integer Programs/instances/")
 problem = "First problem"
@@ -47,6 +47,8 @@ while not pq.empty():
     logging.info(f"Iteration: {iteration}")
 
     _, searching_shape, splitting_direction = pq.get()
+    z1 = searching_shape.topleft
+    z2 = searching_shape.botright
 
     if isinstance(searching_shape, Rectangle):
         z_cap = weighted_sum(model, opt=opt, rectangle=searching_shape)
@@ -64,9 +66,20 @@ while not pq.empty():
 
         else:
             if splitting_direction == 0:
-                z2_bar, z1_bar = split_triangle_horiz  # TODO
+                _, t_b = searching_shape.split_horizontally()
+                z1_bar = find_lexmin(model, (1, 2), opt, t_b)
+
+                t_t = Triangle(z1, (z1_bar[0] - EPS, searching_shape.vertical_midpoint))
+                z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
+
             else:
-                z2_bar, z1_bar = split_triangle_vert  # TODO
+                _, t_b = searching_shape.split_horizontally()
+                z1_bar = find_lexmin(model, (1, 2), opt, t_b)
+
+                t_t = Triangle(
+                    z1, (searching_shape.horizontal_midpoint, z1_bar[1] + EPS)
+                )
+                z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
 
             new_direction = (splitting_direction + 1) % 2
             if z2_bar != searching_shape.topleft:
@@ -79,5 +92,8 @@ while not pq.empty():
                 pq.put((-rect.area, rect, new_direction))
                 solutions_dict[z1_bar] = 0
 
+    iteration += 1
+    if iteration == 3:
+        break
 # writer = Writer("max", instance_sol_path)
 # writer.print_solution(solutions_list)
