@@ -107,3 +107,145 @@ class Bomip2dkp:
             weights_1st_cstr,
             weights_2nd_cstr,
         )
+
+
+class Bomip2C(pyo.ConcreteModel):
+    def __init__(
+        self,
+        m: int,
+        num_binaries: int,
+        num_continuous: int,
+        c1: list[int],
+        f1: list[int],
+        c2: list[int],
+        f2: list[int],
+        a: list[list[int]],
+        a_prime: list[int],
+        b: list[int],
+    ):
+        super().__init__()
+        self.m = pyo.Param(initialize=m)
+        self.num_binaries = pyo.Param(initialize=num_binaries)
+        self.num_continuous = pyo.Param(initialize=num_continuous)
+
+        self.binary_idx = pyo.RangeSet(0, self.num_binaries - 1)
+        self.continouos_idx = pyo.RangeSet(0, self.num_continuous - 1)
+        self.nb_to_m_idx = pyo.RangeSet(self.num_binaries + 1, self.m - 2)
+        self.zero_to_m_idx = pyo.RangeSet(0, self.m - 2)
+
+        self.c1 = pyo.Param(self.continouos_idx, initialize=c1)
+        self.f1 = pyo.Param(self.binary_idx, initialize=f1)
+        self.c2 = pyo.Param(self.continouos_idx, initialize=c2)
+        self.f2 = pyo.Param(self.binary_idx, initialize=f2)
+        self.a = pyo.Param(self.continouos_idx, self.zero_to_m_idx, initialize=a)  #
+        self.a_prime = pyo.Param(self.binary_idx, initialize=a_prime)
+        self.b = pyo.Param(self.zero_to_m_idx, initialize=b)
+
+        self.x = pyo.Var(self.binary_idx, domain=pyo.Boolean)
+        self.y = pyo.Var(self.continouos_idx, domain=pyo.PositiveReals)
+
+        def first_cstr_rule(model, j):
+            lhs = (
+                sum(
+                    [
+                        self.a.extract_values()[i, j] * model.y[i]
+                        for i in self.continouos_idx
+                    ]
+                )
+                + self.a_prime[j] * model.x[j]
+            )
+            return lhs <= self.b[j]
+
+        self.first_cstr = pyo.Constraint(self.binary_idx, rule=first_cstr_rule)
+
+        def second_cstr_rule(model, j):
+            lhs = sum(
+                [
+                    self.a.extract_values()[i, j] * model.y[i]
+                    for i in self.continouos_idx
+                ]
+            )
+            return lhs <= self.b[j]
+
+        self.second_cstr = pyo.Constraint(self.nb_to_m_idx, rule=second_cstr_rule)
+
+        self.third_cstr = pyo.Constraint(
+            expr=pyo.summation(self.x) <= self.num_binaries / 3
+        )
+
+        self.objective1 = pyo.Objective(
+            expr=pyo.summation(self.c1, self.y) + pyo.summation(self.f1, self.x)
+        )
+
+        self.objective2 = pyo.Objective(
+            expr=pyo.summation(self.c2, self.y) + pyo.summation(self.f2, self.x)
+        )
+
+        # Line detection part
+        # line detection constraints
+        self.y2 = pyo.Var(self.continouos_idx, domain=pyo.PositiveReals)
+
+        def first_cstr_rule2(model, j):
+            lhs = (
+                sum(
+                    [
+                        self.a.extract_values()[i, j] * model.y2[i]
+                        for i in self.continouos_idx
+                    ]
+                )
+                + self.a_prime[j] * model.x[j]
+            )
+            return lhs <= self.b[j]
+
+        self.first_cstr2 = pyo.Constraint(self.binary_idx, rule=first_cstr_rule2)
+
+        def second_cstr_rule2(model, j):
+            lhs = sum(
+                [
+                    self.a.extract_values()[i, j] * model.y2[i]
+                    for i in self.continouos_idx
+                ]
+            )
+            return lhs <= self.b[j]
+
+        self.second_cstr2 = pyo.Constraint(self.nb_to_m_idx, rule=second_cstr_rule2)
+
+        self.first_cstr2.deactivate()
+        self.second_cstr2.deactivate()
+
+        # line detection objectives
+        self.objective1_2 = pyo.Objective(
+            expr=pyo.summation(self.c1, self.y2) + pyo.summation(self.f1, self.x)
+        )
+
+        self.objective2_2 = pyo.Objective(
+            expr=pyo.summation(self.c2, self.y2) + pyo.summation(self.f2, self.x)
+        )
+
+        self.objective1_2.deactivate()
+        self.objective2_2.deactivate()
+
+    @classmethod
+    def from_file(cls, instance_path: Path):
+        with open(instance_path) as tfile:
+            content = tfile.readlines()
+
+        m = int(content[0])
+        num_continuous = int(content[1])
+        num_binaries = int(content[2])
+
+        c1 = split_int(content[3])
+        f1 = split_int(content[4])
+        c2 = split_int(content[5])
+        f2 = split_int(content[6])
+
+        a = {}
+        for i in range(num_continuous):
+            for j in range(m - 1):
+                a[i, j] = split_int(content[7 + i])[j]
+
+        checkpoint = 7 + num_continuous
+        a_prime = split_int(content[checkpoint])
+        b = split_int(content[checkpoint + 1])
+
+        return cls(m, num_binaries, num_continuous, c1, f1, c2, f2, a, a_prime, b)

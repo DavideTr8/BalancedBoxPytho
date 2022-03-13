@@ -1,14 +1,14 @@
+from shapes.shapee import Shape
 import math
 
 
-class Rectangle:
+class Rectangle(Shape):
     def __init__(
         self,
         topleft: tuple[float] = (-math.inf, math.inf),
         botright: tuple[float] = (math.inf, -math.inf),
     ):
-        self.topleft = topleft
-        self.botright = botright
+        super().__init__(topleft, botright)
 
     def __lt__(self, other):
         return self.area < other.area
@@ -21,10 +21,9 @@ class Rectangle:
             "Can't find the midpoint of infinity"
         )
 
-        midpoint = (self.topleft[1] + self.botright[1]) / 2
         return (
-            Rectangle(self.topleft, (self.botright[0], midpoint)),
-            Rectangle((self.topleft[0], midpoint), self.botright),
+            Rectangle(self.topleft, (self.botright[0], self.vertical_midpoint)),
+            Rectangle((self.topleft[0], self.vertical_midpoint), self.botright),
         )
 
     @property
@@ -36,11 +35,3 @@ class Rectangle:
         y2 = self.botright[1]
 
         return (x2 - x1) * (y1 - y2)
-
-
-if __name__ == "__main__":
-    a = Rectangle((2, 3), (5, 1))
-    print(a.area)
-
-    b, c = a.split_horizontally()
-    print(b.area, c.area)

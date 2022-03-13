@@ -1,8 +1,7 @@
 from parsing import Bomip2dkp, pyo
 from lexmin import find_lexmin
 from queue import PriorityQueue
-from Rectangle import Rectangle
-from printer import Writer
+from shapes.rectangle import Rectangle
 from pathlib import Path
 import logging
 
@@ -50,14 +49,14 @@ while not pq.empty():
 
     _, r_b = searching_rectangle.split_horizontally()
 
-    z1_bar = find_lexmin(model, (1, 2), opt, rectangle=r_b, verbose=False)
+    z1_bar = find_lexmin(model, (1, 2), opt, shape=r_b, verbose=False)
     if z1_bar != z2:
         solutions_list.append(z1_bar)
         new_rect = Rectangle(z1_bar, z2)
         pq.put((-new_rect.area, new_rect))
 
     r_t = Rectangle(z1, (z1_bar[0] - EPS, (z1[1] + z2[1]) / 2))
-    z2_bar = find_lexmin(model, (2, 1), opt, rectangle=r_t, verbose=False)
+    z2_bar = find_lexmin(model, (2, 1), opt, shape=r_t, verbose=False)
 
     if z2_bar != z1:
         solutions_list.append(z2_bar)
@@ -65,6 +64,8 @@ while not pq.empty():
         pq.put((-new_rect.area, new_rect))
 
     iteration += 1
+    if iteration == 2:
+        break
 
-writer = Writer("max", instance_sol_path)
-writer.print_solution(solutions_list)
+# writer = Writer("max", instance_sol_path)
+# writer.print_solution(solutions_list)
