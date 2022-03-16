@@ -92,13 +92,14 @@ def weighted_sum(
     opt: pyo.SolverFactory,
     z_cap=None,
 ):
+    EPS = 1e-4
     model_copy = deepcopy(model)
 
     z1 = rectangle.topleft
     z2 = rectangle.botright
 
-    lambda1 = z2[0] - z2[1]
-    lambda2 = z1[1] - z1[0]
+    lambda1 = z1[1] - z2[1]
+    lambda2 = z2[0] - z1[0]
 
     model_copy.weighted_obj = pyo.Objective(
         expr=model_copy.objective1.expr * lambda1 + model_copy.objective2.expr * lambda2
@@ -125,8 +126,14 @@ def weighted_sum(
         z_star = (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
         if z_star not in z_cap:
             z_cap.append(z_star)
+        if pyo.value(model_copy.weighted_obj) < lambda1 * z1[0] + lambda2 * z1[1] - EPS:
+            logging.warning(
+                f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z1[0] + lambda2 * z1[1]}"
+            )
+            logging.warning(
+                f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z2[0] + lambda2 * z2[1]}"
+            )
 
-        if z_star != z1 and z_star != z2:
             r1 = Rectangle(z1, z_star)
             r2 = Rectangle(z_star, z2)
             z_cap = weighted_sum(model, r1, opt, z_cap=z_cap)
@@ -138,26 +145,26 @@ def weighted_sum(
 
 def line_detector(model, opt, triangle):
     model_copy = deepcopy(model)
-
-    model_copy.dummy_obj = pyo.Objective(expr=0)
+    model_copy.gamma = pyo.Var(domain=pyo.PositiveReals)
+    model_copy.dummy_obj = pyo.Objective(expr=model_copy.gamma)
 
     for cstr in model_copy.component_objects(pyo.Constraint):
         cstr.activate()
 
     model_copy.cstr_obj_1_1 = pyo.Constraint(
-        expr=model_copy.objective1.expr <= triangle.topleft[0]
+        expr=model_copy.objective1.expr <= triangle.topleft[0] + model_copy.gamma
     )
 
     model_copy.cstr_obj_2_1 = pyo.Constraint(
-        expr=model_copy.objective2.expr <= triangle.topleft[1]
+        expr=model_copy.objective2.expr <= triangle.topleft[1] + model_copy.gamma
     )
 
     model_copy.cstr_obj_1_2 = pyo.Constraint(
-        expr=model_copy.objective1_2.expr <= triangle.botright[0]
+        expr=model_copy.objective1_2.expr <= triangle.botright[0] + model_copy.gamma
     )
 
     model_copy.cstr_obj_2_2 = pyo.Constraint(
-        expr=model_copy.objective2_2.expr <= triangle.botright[1]
+        expr=model_copy.objective2_2.expr <= triangle.botright[1] + model_copy.gamma
     )
 
     model_copy.objective1.deactivate()
@@ -166,4 +173,9 @@ def line_detector(model, opt, triangle):
     logging.info(f"Solving the line detector model.")
     res = opt.solve(model_copy)
 
-    return res.Solver.Termination_condition == "optimal"
+    feasible = (
+        res.Solver.Termination_condition == "optimal"
+        and pyo.value(model_copy.gamma) == 0
+    )
+
+    return feasible

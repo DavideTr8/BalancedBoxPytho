@@ -5,12 +5,14 @@ from shapes.rectangle import Rectangle
 from shapes.triangle import Triangle
 from pathlib import Path
 import logging
+from utils import dist, SelfOrderingDict
+from printer import Plotter
 
-# from gurobipy import *
 
 logging.basicConfig(level=20)
+plotter = Plotter(plot_style="o")
 
-EPS = 0.01  # epsilon for when splitting a rectangle
+EPS = 1e-4  # epsilon for when splitting a rectangle
 
 dataset_path = Path("./BOMIP/Part II- Mixed Integer Programs/instances/")
 problem = "First problem"
@@ -30,6 +32,7 @@ solver_path = "/opt/gurobi951/linux64/bin/gurobi.sh"
 # opt = pyo.SolverFactory("glpk", executable=solver_path)
 # solver_path = "/home/da_orobix/PycharmProjects/BalancedBoxPython/venv/lib/python3.9/site-packages/pulp/solverdir/cbc/linux/64/cbc"
 opt = pyo.SolverFactory("gurobi", executable=solver_path)
+opt.options["MIPGap"] = 1e-5
 
 z_T = find_lexmin(
     model, (1, 2), opt
@@ -39,7 +42,7 @@ z_B = find_lexmin(
 )  # (pyo.value(model.objective1), pyo.value(model.objective2))
 
 splitting_direction = 0  # 0 horizontal, 1 vertical
-solutions_dict = {z_T: 0, z_B: 0}
+solutions_dict = SelfOrderingDict({z_T: 0, z_B: 0})
 r = Rectangle(z_T, z_B)
 pq = PriorityQueue()
 pq.put((-r.area, r, splitting_direction))
@@ -70,32 +73,37 @@ while not pq.empty():
             if splitting_direction == 0:
                 _, t_b = searching_shape.split_horizontally()
                 z1_bar = find_lexmin(model, (1, 2), opt, t_b)
-
-                t_t = Triangle(z1, (z1_bar[0] - EPS, searching_shape.vertical_midpoint))
-                z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
+                if abs(z1_bar[1] - t_b.topleft[1]) < EPS:
+                    z2_bar = z1_bar
+                else:
+                    t_t = Triangle(z1, (z1_bar[0] - EPS, z1_bar[1]))
+                    z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
 
             else:
-                _, t_b = searching_shape.split_horizontally()
-                z1_bar = find_lexmin(model, (1, 2), opt, t_b)
+                t_t, _ = searching_shape.split_vertically()
+                z2_bar = find_lexmin(model, (2, 1), opt, t_t)
 
-                t_t = Triangle(
-                    z1, (searching_shape.horizontal_midpoint, z1_bar[1] + EPS)
-                )
-                z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
+                if abs(z2_bar[0] - t_t.botright[0]) < EPS:
+                    z1_bar == z2_bar
+                else:
+                    t_b = Triangle((z2_bar[0], z2_bar[1] - EPS), z2)
+
+                    z1_bar = find_lexmin(model, (1, 2), opt, shape=t_b, verbose=False)
 
             new_direction = (splitting_direction + 1) % 2
-            if z2_bar != searching_shape.topleft:
+
+            if dist(z2_bar, searching_shape.topleft) > EPS:
                 rect = Rectangle(searching_shape.topleft, z2_bar)
                 pq.put((-rect.area, rect, new_direction))
                 solutions_dict[z2_bar] = 0
 
-            if z1_bar != searching_shape.botright:
+            if dist(z1_bar, searching_shape.botright) > EPS:
                 rect = Rectangle(z1_bar, searching_shape.botright)
                 pq.put((-rect.area, rect, new_direction))
                 solutions_dict[z1_bar] = 0
 
     iteration += 1
 
-solutions_dict = dict(sorted(solutions_dict.items(), key=lambda x: -x[0][0]))
 # writer = Writer("max", instance_sol_path)
 # writer.print_solution(solutions_list)
+plotter.plot_solutions(solutions_dict)
