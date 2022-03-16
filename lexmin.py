@@ -87,7 +87,10 @@ def find_lexmin(
 
 
 def weighted_sum(
-    model: pyo.ConcreteModel, rectangle: Rectangle, opt: pyo.SolverFactory
+    model: pyo.ConcreteModel,
+    rectangle: Rectangle,
+    opt: pyo.SolverFactory,
+    z_cap=None,
 ):
     model_copy = deepcopy(model)
 
@@ -116,18 +119,29 @@ def weighted_sum(
     logging.info(f"Solving the weighted sum model.")
     opt.solve(model_copy)
 
-    z_cap = [(pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))]
+    if z_cap is None:
+        z_cap = [z1, z2]
+    if model_copy.solutions.solutions:
+        z_star = (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
+        if z_star not in z_cap:
+            z_cap.append(z_star)
 
-    # TODO solution pool
+        if z_star != z1 and z_star != z2:
+            r1 = Rectangle(z1, z_star)
+            r2 = Rectangle(z_star, z2)
+            z_cap = weighted_sum(model, r1, opt, z_cap=z_cap)
+            z_cap = weighted_sum(model, r2, opt, z_cap=z_cap)
+
+    z_cap.sort(key=lambda x: x[0])
     return z_cap
 
 
 def line_detector(model, opt, triangle):
     model_copy = deepcopy(model)
 
-    model_copy.dummy_obj = model_copy.Objective(expr=0)
+    model_copy.dummy_obj = pyo.Objective(expr=0)
 
-    for cstr in model.component_objects(pyo.Constraint):
+    for cstr in model_copy.component_objects(pyo.Constraint):
         cstr.activate()
 
     model_copy.cstr_obj_1_1 = pyo.Constraint(
@@ -146,6 +160,9 @@ def line_detector(model, opt, triangle):
         expr=model_copy.objective2_2.expr <= triangle.botright[1]
     )
 
+    model_copy.objective1.deactivate()
+    model_copy.objective2.deactivate()
+    model_copy.dummy_obj.activate()
     logging.info(f"Solving the line detector model.")
     res = opt.solve(model_copy)
 

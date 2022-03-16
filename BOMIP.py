@@ -6,6 +6,8 @@ from shapes.triangle import Triangle
 from pathlib import Path
 import logging
 
+# from gurobipy import *
+
 logging.basicConfig(level=20)
 
 EPS = 0.01  # epsilon for when splitting a rectangle
@@ -23,11 +25,11 @@ instance_sol_path = problem_sol_path / instance
 instance_path = dataset_path / problem / problem_class / instance
 model = Bomip2C.from_file(instance_path)  # TODO change parser
 
-# solver_path = "/usr/local/bin/glpsol"
-# opt = pyo.SolverFactory("glpk", executable=solver_path)
-solver_path = "/home/da_orobix/PycharmProjects/BalancedBoxPython/venv/lib/python3.9/site-packages/pulp/solverdir/cbc/linux/64/cbc"
-opt = pyo.SolverFactory("cbc", executable=solver_path)
+solver_path = "/opt/gurobi951/linux64/bin/gurobi.sh"
 
+# opt = pyo.SolverFactory("glpk", executable=solver_path)
+# solver_path = "/home/da_orobix/PycharmProjects/BalancedBoxPython/venv/lib/python3.9/site-packages/pulp/solverdir/cbc/linux/64/cbc"
+opt = pyo.SolverFactory("gurobi", executable=solver_path)
 
 z_T = find_lexmin(
     model, (1, 2), opt
@@ -93,7 +95,7 @@ while not pq.empty():
                 solutions_dict[z1_bar] = 0
 
     iteration += 1
-    if iteration == 3:
-        break
+
+solutions_dict = dict(sorted(solutions_dict.items(), key=lambda x: -x[0][0]))
 # writer = Writer("max", instance_sol_path)
 # writer.print_solution(solutions_list)

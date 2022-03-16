@@ -10,6 +10,9 @@ class Shape:
         self.topleft = topleft
         self.botright = botright
 
+    def __lt__(self, other):
+        return self.area < other.area
+
     @property
     def area(self):
         raise NotImplementedError
