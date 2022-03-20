@@ -9,15 +9,15 @@ class Writer:
         self.problem_type = problem_type
         self.solution_path = solution_path
 
-    def print_solution(self, sol_list):
+    def print_solution(self, solutions_dict):
         if self.problem_type == "max":
-            sol_list = [(-x[0], -x[1]) for x in sol_list]
-
-        sorted_sols = sorted(sol_list, key=lambda x: x[0])
+            sol_list = [(-x[0], -x[1], solutions_dict[x]) for x in solutions_dict]
+        else:
+            sol_list = [(-x[0], -x[1], solutions_dict[x]) for x in solutions_dict]
 
         with open(self.solution_path, "w") as sfile:
-            for sol in sorted_sols:
-                sfile.write(f"{sol[0]}\t{sol[1]}\n")
+            for sol in sol_list:
+                sfile.write(f"{sol[0]}\t{sol[1]}\t{sol[2]}\n")
 
 
 class Plotter:

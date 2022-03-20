@@ -109,6 +109,10 @@ class Bomip2dkp:
         )
 
 
+class Bomip2ap:
+    pass
+
+
 class Bomip2C(pyo.ConcreteModel):
     def __init__(
         self,

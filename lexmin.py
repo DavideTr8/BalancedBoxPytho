@@ -13,7 +13,7 @@ def find_lexmin(
     opt: pyo.SolverFactory,
     shape: Shape = Rectangle(),
     verbose=False,
-) -> pyo.ConcreteModel:
+) -> tuple[float, float]:
     """
     Finds the lexmin of a biobjective minimization problem's model wrote in Pyomo where both objectives are defined as
     model.objective1 and model.objective2
@@ -27,7 +27,7 @@ def find_lexmin(
         Rectange in which the optimization is constrained.
     :param verbose: bool (optional),
         Print the output of the solver.
-    :return: pyo.ConcreteModel
+    :return: tuple
     """
     model_copy = deepcopy(model)
 

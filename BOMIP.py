@@ -105,5 +105,5 @@ while not pq.empty():
     iteration += 1
 
 # writer = Writer("max", instance_sol_path)
-# writer.print_solution(solutions_list)
+# writer.print_solution(solutions_dict)
 plotter.plot_solutions(solutions_dict)
