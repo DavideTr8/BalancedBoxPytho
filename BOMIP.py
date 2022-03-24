@@ -1,4 +1,4 @@
-from parsing import Bomip2C, pyo
+from parsing import Bomip2C, Bomip2buflp, pyo
 from lexmin import find_lexmin, weighted_sum, line_detector
 from queue import PriorityQueue
 from shapes.rectangle import Rectangle
@@ -6,13 +6,12 @@ from shapes.triangle import Triangle
 from pathlib import Path
 import logging
 from utils import dist, SelfOrderingDict
-from printer import Plotter
+from printer import Writer
 
 import os
 
 
 logging.basicConfig(level=20)
-plotter = Plotter(plot_style="o")
 
 EPS = float(
     os.getenv("EPS_SPLIT", default=0.001)
@@ -31,7 +30,12 @@ def main(problem, problem_class, instance):
 
     instance_path = DATASET_PATH / problem / problem_class / instance
     model = Bomip2C.from_file(instance_path)  # TODO change parser
-
+    if problem == "First problem":
+        problem = Bomip2C.from_file(instance_path)
+    elif problem == "Second problem (BUFLP)":
+        problem = Bomip2buflp.from_file(instance_path)
+    else:
+        raise ValueError("Wrong value for the instance argument.")
     opt = pyo.SolverFactory(
         "gurobi",
         executable=os.getenv(

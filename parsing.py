@@ -253,3 +253,7 @@ class Bomip2C(pyo.ConcreteModel):
         b = split_int(content[checkpoint + 1])
 
         return cls(m, num_binaries, num_continuous, c1, f1, c2, f2, a, a_prime, b)
+
+
+class Bomip2buflp:
+    pass

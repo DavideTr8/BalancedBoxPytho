@@ -7,8 +7,12 @@ class Shape:
         topleft: tuple[float] = (-math.inf, math.inf),
         botright: tuple[float] = (math.inf, -math.inf),
     ):
-        self.topleft = topleft
-        self.botright = botright
+        if topleft[0] <= botright[0]:
+            self.topleft = topleft
+            self.botright = botright
+        else:
+            self.topleft = botright
+            self.botright = topleft
 
     def __lt__(self, other):
         return self.area < other.area

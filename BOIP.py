@@ -11,9 +11,7 @@ from printer import Writer
 
 logging.basicConfig(level=20)
 
-EPS = float(
-    os.getenv("EPS_SPLIT", default=0.001)
-)  # epsilon for when splitting a rectangle
+EPS = float(os.getenv("EPS_SPLIT", default=1))  # epsilon for when splitting a rectangle
 DATASET_PATH = Path(
     os.getenv("DATASET_PATH", default="./BOMIP/Part I- Integer Programs/instances/")
 )
