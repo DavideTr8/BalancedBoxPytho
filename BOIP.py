@@ -21,11 +21,11 @@ SOLUTIONS_PATH = Path(os.getenv("SOLUTIONS_PATH", default="./my_solutions"))
 
 def main(problem, problem_class, instance):
 
-    problem_sol_path = SOLUTIONS_PATH / problem / problem_class
+    problem_sol_path = Path.cwd() / SOLUTIONS_PATH / problem / problem_class
     problem_sol_path.mkdir(parents=True, exist_ok=True)
-    instance_sol_path = problem_sol_path / instance
+    instance_sol_path = Path.cwd() / problem_sol_path / instance
 
-    instance_path = DATASET_PATH / problem / problem_class / instance
+    instance_path = Path.cwd() / DATASET_PATH / problem / problem_class / instance
 
     if problem == "2DKP":
         problem = Bomip2dkp.from_file(instance_path)
