@@ -39,6 +39,11 @@ def find_lexmin(
             expr=model_copy.objective2.expr <= shape.topleft[1]
         )
 
+        if isinstance(shape, Rectangle):
+            model_copy.zbot_cstr_x = pyo.Constraint(
+                expr=model_copy.objective1.expr <= shape.botright[0]
+            )
+
         logging.info(
             f"Solving the first problem in lexmin with order {objective_order}"
         )
@@ -59,6 +64,10 @@ def find_lexmin(
         model_copy.objective2.activate()
         model_copy.objective1.deactivate()
 
+        if isinstance(shape, Rectangle):
+            model_copy.ztop_cstr_y = pyo.Constraint(
+                expr=model_copy.objective2.expr <= shape.topleft[1]
+            )
         model_copy.zbot_cstr_x = pyo.Constraint(
             expr=model_copy.objective1.expr <= shape.botright[0]
         )

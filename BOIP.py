@@ -6,12 +6,13 @@ from queue import PriorityQueue
 from shapes.rectangle import Rectangle
 from pathlib import Path
 import logging
-from utils import SelfOrderingDict
+from utils import SelfOrderingDict, dist
 from printer import Writer
 
 logging.basicConfig(level=20)
 
 EPS = float(os.getenv("EPS_SPLIT", default=1))  # epsilon for when splitting a rectangle
+DIFF_EPS = 0.1
 DATASET_PATH = Path(
     os.getenv("DATASET_PATH", default="./BOMIP/Part I- Integer Programs/instances/")
 )
@@ -62,19 +63,24 @@ def main(problem, problem_class, instance):
 
         _, r_b = searching_rectangle.split_horizontally()
 
-        z1_bar = find_lexmin(model, (1, 2), opt, shape=r_b, verbose=False)
-        if z1_bar != z2:
-            solutions_dict[z1_bar] = 0
-            new_rect = Rectangle(z1_bar, z2)
-            pq.put((-new_rect.area, new_rect))
+        try:
+            z1_bar = find_lexmin(model, (1, 2), opt, shape=r_b, verbose=False)
+            if dist(z1_bar, z2) > DIFF_EPS:
+                solutions_dict[z1_bar] = 0
+                new_rect = Rectangle(z1_bar, z2)
+                if new_rect.area >= EPS:
+                    pq.put((-new_rect.area, new_rect))
 
-        r_t = Rectangle(z1, (z1_bar[0] - EPS, (z1[1] + z2[1]) / 2))
-        z2_bar = find_lexmin(model, (2, 1), opt, shape=r_t, verbose=False)
+            r_t = Rectangle(z1, (z1_bar[0] - EPS, (z1[1] + z2[1]) / 2))
+            z2_bar = find_lexmin(model, (2, 1), opt, shape=r_t, verbose=False)
 
-        if z2_bar != z1:
-            solutions_dict[z2_bar] = 0
-            new_rect = Rectangle(z1, z2_bar)
-            pq.put((-new_rect.area, new_rect))
+            if dist(z2_bar, z1) > DIFF_EPS:
+                solutions_dict[z2_bar] = 0
+                new_rect = Rectangle(z1, z2_bar)
+                if new_rect.area >= EPS:
+                    pq.put((-new_rect.area, new_rect))
+        except ValueError:
+            logging.warning("Solution not found during this iteration")
         iteration += 1
 
     writer = Writer("max", instance_sol_path)

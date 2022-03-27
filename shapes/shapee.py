@@ -38,8 +38,8 @@ class Shape:
         )
 
         return (
-            Shape(self.topleft, (self.botright[0], self.vertical_midpoint)),
-            Shape((self.topleft[0], self.vertical_midpoint), self.botright),
+            self.__class__(self.topleft, (self.botright[0], self.vertical_midpoint)),
+            self.__class__((self.topleft[0], self.vertical_midpoint), self.botright),
         )
 
     def split_vertically(self):
@@ -51,6 +51,6 @@ class Shape:
         )
 
         return (
-            Shape(self.topleft, (self.horizontal_midpoint, self.botright[1])),
-            Shape((self.horizontal_midpoint, self.topleft[1]), self.botright),
+            self.__class__(self.topleft, (self.horizontal_midpoint, self.botright[1])),
+            self.__class__((self.horizontal_midpoint, self.topleft[1]), self.botright),
         )
