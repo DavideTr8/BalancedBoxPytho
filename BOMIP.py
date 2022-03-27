@@ -41,7 +41,7 @@ def main(problem, problem_class, instance):
     opt = pyo.SolverFactory(
         "gurobi",
         executable=os.getenv(
-            "SOLVER_PATH", default="/opt/gurobi951/linux64/bin/gurobi.sh"
+            "SOLVER_PATH", default="C:/gurobi950/win64/bin/gurobi.bat"
         ),
     )
     opt.options["MIPGap"] = 1e-5
