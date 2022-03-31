@@ -23,9 +23,9 @@ else:
 if args.run_all:
     instances = {
         "class A": ["1dat.txt", "2dat.txt", "3dat.txt", "4dat.txt", "5dat.txt"],
-        "class B": ["6dat.txt", "7dat.txt", "8dat.txt", "9dat.txt", "10dat.txt"],
+        "class B": ["7dat.txt", "8dat.txt", "9dat.txt", "10dat.txt"],
         "class C": ["11dat.txt", "12dat.txt", "13dat.txt", "14dat.txt", "15dat.txt"],
-        "class D": ["16dat.txt", "17dat.txt", "18dat.txt", "19dat.txt", "20dat.txt"],
+        "class D": ["17dat.txt", "18dat.txt", "19dat.txt", "20dat.txt"],
     }
 
     for pclass in instances:

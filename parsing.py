@@ -109,8 +109,13 @@ class Bomip2dkp:
         )
 
 
-class Bomip2ap:
-    pass
+class Bomip2ap(pyo.ConcreteModel):
+    def __init__(self, num_jobs: int, obj1_weights: list[int], obj2_weights: list[int]):
+        self.num_jobs = pyo.Param(initialize=num_jobs)
+        self.obj1_weights = pyo.Param(initialize=obj1_weights)
+        self.obj2_weights = pyo.Param(initialize=obj2_weights)
+
+        # self.
 
 
 class Bomip2C(pyo.ConcreteModel):
