@@ -1,12 +1,13 @@
 from shapes.shapee import Shape
 import math
+from shapes.Point import Point
 
 
 class Rectangle(Shape):
     def __init__(
         self,
-        topleft: tuple[float] = (-math.inf, math.inf),
-        botright: tuple[float] = (math.inf, -math.inf),
+        topleft: Point = Point((-math.inf, math.inf)),
+        botright: Point = Point((math.inf, -math.inf)),
     ):
         super().__init__(topleft, botright)
 

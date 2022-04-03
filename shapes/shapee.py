@@ -1,12 +1,18 @@
 import math
+from shapes.Point import Point
 
 
 class Shape:
     def __init__(
         self,
-        topleft: tuple[float] = (-math.inf, math.inf),
-        botright: tuple[float] = (math.inf, -math.inf),
+        topleft: Point = Point((-math.inf, math.inf)),
+        botright: Point = Point((math.inf, -math.inf)),
     ):
+        if isinstance(topleft, tuple):
+            topleft = Point(topleft)
+        if isinstance(botright, tuple):
+            botright = Point(botright)
+
         if topleft[0] <= botright[0]:
             self.topleft = topleft
             self.botright = botright
@@ -16,6 +22,11 @@ class Shape:
 
     def __lt__(self, other):
         return self.area < other.area
+
+    def __eq__(self, other):
+        if isinstance(self, type(other)):
+            return self.topleft == other.topleft and self.botright == other.botright
+        return False
 
     @property
     def area(self):

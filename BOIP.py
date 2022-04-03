@@ -7,7 +7,6 @@ from shapes.rectangle import Rectangle
 from pathlib import Path
 import logging
 from utils import SelfOrderingDict, dist
-from printer import Writer
 
 logging.basicConfig(level=20)
 
@@ -23,14 +22,14 @@ def main(problem, problem_class, instance):
 
     problem_sol_path = Path.cwd() / SOLUTIONS_PATH / problem / problem_class
     problem_sol_path.mkdir(parents=True, exist_ok=True)
-    instance_sol_path = Path.cwd() / problem_sol_path / instance
+    Path.cwd() / problem_sol_path / instance
 
     instance_path = Path.cwd() / DATASET_PATH / problem / problem_class / instance
 
     if problem == "2DKP":
         problem = Bomip2dkp.from_file(instance_path)
     elif problem == "AP":
-        problem = Bomip2ap.from_file(instance_path)
+        model = Bomip2ap.from_file(instance_path)
     else:
         raise ValueError("Wrong value for the instance argument.")
 
@@ -41,7 +40,7 @@ def main(problem, problem_class, instance):
         ),
     )
 
-    model = problem.to_pyomo()
+    # model = problem.to_pyomo()
 
     z_T = find_lexmin(
         model, (1, 2), opt
@@ -82,6 +81,8 @@ def main(problem, problem_class, instance):
         except ValueError:
             logging.warning("Solution not found during this iteration")
         iteration += 1
+        if iteration == 5:
+            break
 
-    writer = Writer("max", instance_sol_path)
-    writer.print_solution(solutions_dict)
+    # writer = Writer("max", instance_sol_path)
+    # writer.print_solution(solutions_dict)

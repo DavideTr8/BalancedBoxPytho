@@ -1,5 +1,7 @@
-# matplotlib.use("TkAgg")
-# from matplotlib import pyplot as plt
+import matplotlib
+
+matplotlib.use("TkAgg")
+from matplotlib import pyplot as plt
 
 
 class Writer:
@@ -18,17 +20,26 @@ class Writer:
                 sfile.write(f"{sol[0]}\t{sol[1]}\t{sol[2]}\n")
 
 
-# class Plotter:
-#     def __init__(self, plot_style):
-#         self.plot_style = plot_style
-#
-#     def plot_solutions(self, sol_dict):
-#         plt.figure(0)
-#         plt.scatter([x[0] for x in sol_dict], [x[1] for x in sol_dict])
-#         keys = list(sol_dict.keys())
-#         for item_idx in range(len(sol_dict) - 1):
-#             key = keys[item_idx]
-#             if sol_dict[key] == 1:
-#                 next_key = keys[item_idx + 1]
-#                 plt.plot([key[0], next_key[0]], [key[1], next_key[1]])
-#         plt.show()
+class Plotter:
+    def __init__(self, resolution, plot_style, scatter_style):
+        self.resolution = resolution
+        self.plot_style = plot_style
+        self.scatter_style = scatter_style
+
+    def plot_solutions(self, sol_dict, save_path=None):
+        plt.figure(0)
+        plt.scatter(
+            [x[0] for x in sol_dict], [x[1] for x in sol_dict], **self.scatter_style
+        )
+        keys = list(sol_dict.keys())
+        for item_idx in range(len(sol_dict) - 1):
+            key = keys[item_idx]
+            if sol_dict[key] == 1:
+                next_key = keys[item_idx + 1]
+                plt.plot(
+                    [key[0], next_key[0]], [key[1], next_key[1]], **self.plot_style
+                )
+        if save_path is not None:
+            plt.savefig(save_path, dpi=self.resolution)
+        else:
+            plt.show()

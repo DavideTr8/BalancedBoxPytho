@@ -5,6 +5,7 @@ import pyomo.environ as pyo
 
 from shapes.rectangle import Rectangle
 from shapes.shapee import Shape
+from shapes.Point import Point
 
 
 def find_lexmin(
@@ -13,7 +14,7 @@ def find_lexmin(
     opt: pyo.SolverFactory,
     shape: Shape = Rectangle(),
     verbose=False,
-) -> tuple[float, float]:
+) -> Point:
     """
     Finds the lexmin of a biobjective minimization problem's model wrote in Pyomo where both objectives are defined as
     model.objective1 and model.objective2
@@ -27,7 +28,7 @@ def find_lexmin(
         Rectange in which the optimization is constrained.
     :param verbose: bool (optional),
         Print the output of the solver.
-    :return: tuple
+    :return: Point
     """
     model_copy = deepcopy(model)
 
@@ -92,7 +93,7 @@ def find_lexmin(
     else:
         raise ValueError("The objective order provided isn't accepted")
 
-    return pyo.value(model_copy.objective1), pyo.value(model_copy.objective2)
+    return Point((pyo.value(model_copy.objective1), pyo.value(model_copy.objective2)))
 
 
 def weighted_sum(
@@ -132,7 +133,9 @@ def weighted_sum(
     if z_cap is None:
         z_cap = [z1, z2]
     if model_copy.solutions.solutions:
-        z_star = (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
+        z_star = Point(
+            (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
+        )
         if z_star not in z_cap:
             z_cap.append(z_star)
         if pyo.value(model_copy.weighted_obj) < lambda1 * z1[0] + lambda2 * z1[1] - EPS:

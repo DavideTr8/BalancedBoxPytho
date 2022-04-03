@@ -1,11 +1,15 @@
 from pathlib import Path
-
+import numpy as np
 import pyomo.environ as pyo
 
 
 def split_int(line: str) -> list[int]:
     """Split and transform to int each element of line."""
     return [int(x) for x in line.split()]
+
+
+def to_array(line: str, shape: tuple[int, int]) -> np.array:
+    return np.reshape(np.array(split_int(line)), shape)
 
 
 class Bomip2dkp:
@@ -110,12 +114,38 @@ class Bomip2dkp:
 
 
 class Bomip2ap(pyo.ConcreteModel):
-    def __init__(self, num_jobs: int, obj1_weights: list[int], obj2_weights: list[int]):
+    def __init__(self, num_jobs: int, obj1_weights: np.array, obj2_weights: np.array):
+        super().__init__()
         self.num_jobs = pyo.Param(initialize=num_jobs)
         self.obj1_weights = pyo.Param(initialize=obj1_weights)
         self.obj2_weights = pyo.Param(initialize=obj2_weights)
 
-        # self.
+        self.jobs = pyo.RangeSet(0, self.num_jobs - 1)
+        self.x = pyo.Var(self.jobs, self.jobs, within=pyo.Boolean)
+
+        def cstr_rule(model, i):
+            return sum(model.x[i, j] for j in model.jobs) == 1
+
+        def cstr_rule2(model, j):
+            return sum(model.x[i, j] for i in model.jobs) == 1
+
+        self.cstr1 = pyo.Constraint(self.jobs, rule=cstr_rule)
+        self.cstr2 = pyo.Constraint(self.jobs, rule=cstr_rule2)
+
+        self.objective1 = pyo.Objective(expr=pyo.summation(obj1_weights, self.x))
+
+        self.objective2 = pyo.Objective(expr=pyo.summation(obj2_weights, self.x))
+
+    @classmethod
+    def from_file(cls, instance_path: Path):
+        with open(instance_path) as tfile:
+            content = tfile.readlines()
+
+        num_jobs = int(content[0])
+        obj1 = to_array(content[1], (num_jobs, num_jobs))
+        obj2 = to_array(content[2], (num_jobs, num_jobs))
+
+        return cls(num_jobs, obj1, obj2)
 
 
 class Bomip2C(pyo.ConcreteModel):
@@ -260,5 +290,74 @@ class Bomip2C(pyo.ConcreteModel):
         return cls(m, num_binaries, num_continuous, c1, f1, c2, f2, a, a_prime, b)
 
 
-class Bomip2buflp:
-    pass
+class Bomip2buflp(pyo.ConcreteModel):
+    def __init__(self, nf, nd, c1, c2, f):
+        super().__init__()
+        self.nf = pyo.Param(initialize=nf)
+        self.nd = pyo.Param(initialize=nd)
+
+        self.c1 = pyo.Param(initialize=c1)
+        self.f = pyo.Param(initialize=f)
+        self.c2 = pyo.Param(initialize=c2)
+
+        self.facilities = pyo.RangeSet(0, self.nf - 1)
+        self.zones = pyo.RangeSet(0, self.nd - 1)
+
+        self.x = pyo.Var(self.facilities, within=pyo.Boolean)
+        self.y = pyo.Var(self.zones, self.facilities, within=pyo.PositiveReals)
+
+        def first_cstr_rule(model, i):
+            return sum(model.y[i, j] for j in model.facilities) == 1
+
+        self.cstr1 = pyo.Constraint(self.zones, rule=first_cstr_rule)
+
+        def second_cstr_rule(model, i, j):
+            return model.y[i, j] <= model.x[j]
+
+        self.cstr2 = pyo.Constraint(self.zones, self.facilities, rule=second_cstr_rule)
+
+        self.objective1 = pyo.Objective(
+            expr=pyo.summation(self.c1, self.y) + pyo.summation(self.f, self.x)
+        )
+
+        self.objective2 = pyo.Objective(expr=pyo.summation(self.c2, self.y))
+
+        # part for line detection
+        self.y2 = pyo.Var(self.zones, self.facilities, within=pyo.PositiveReals)
+
+        def first_cstr_rule2(model, i):
+            return sum(model.y2[i, j] for j in model.facilities) == 1
+
+        self.cstr1_2 = pyo.Constraint(self.zones, rule=first_cstr_rule2)
+
+        def second_cstr_rule2(model, i, j):
+            return model.y2[i, j] <= model.x[j]
+
+        self.cstr2_2 = pyo.Constraint(
+            self.zones, self.facilities, rule=second_cstr_rule2
+        )
+
+        self.objective1_2 = pyo.Objective(
+            expr=pyo.summation(self.c1, self.y2) + pyo.summation(self.f, self.x)
+        )
+
+        self.objective2_2 = pyo.Objective(expr=pyo.summation(self.c2, self.y2))
+
+        self.cstr1_2.deactivate()
+        self.cstr2_2.deactivate()
+        self.objective1_2.deactivate()
+        self.objective2_2.deactivate()
+
+    @classmethod
+    def from_file(cls, instance_path: Path):
+        with open(instance_path) as tfile:
+            content = tfile.readlines()
+
+        nf = content[0]
+        nd = content[1]
+
+        c1 = to_array(content[2], (nd, nf))
+        f = split_int(content[3])
+        c2 = to_array(content[4], (nd, nf))
+
+        return cls(nf, nd, c1, c2, f)
