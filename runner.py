@@ -18,7 +18,7 @@ boip_problems = ["2DKP", "AP"]
 if args.problem in boip_problems:
     problem_type = BOIP
     instances = {
-        # "class A": ["1dat.txt", "2dat.txt", "3dat.txt", "4dat.txt", "5dat.txt"],
+        "class A": ["1dat.txt", "2dat.txt", "3dat.txt", "4dat.txt", "5dat.txt"],
         "class B": ["7dat.txt", "8dat.txt", "9dat.txt", "10dat.txt"],
         "class C": ["11dat.txt", "12dat.txt", "13dat.txt", "14dat.txt", "15dat.txt"],
         "class D": ["17dat.txt", "18dat.txt", "19dat.txt", "20dat.txt"],
