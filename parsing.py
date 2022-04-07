@@ -3,13 +3,17 @@ import numpy as np
 import pyomo.environ as pyo
 
 
-def split_int(line: str) -> list[int]:
+def split_numeric(line: str, ntype=int) -> list[int]:
     """Split and transform to int each element of line."""
-    return [int(x) for x in line.split()]
+    return [ntype(x) for x in line.split()]
 
 
-def to_array(line: str, shape: tuple[int, int]) -> np.array:
-    return np.reshape(np.array(split_int(line)), shape)
+def to_array(lines: list[str], shape=None, ntype=int) -> np.array:
+    if isinstance(lines, list):
+        as_list = [split_numeric(line, ntype) for line in lines]
+    else:
+        as_list = split_numeric(lines, shape, ntype)
+    return np.array(as_list)
 
 
 class Bomip2dkp:
@@ -97,10 +101,10 @@ class Bomip2dkp:
         num_binaries = int(content[0])
         rhs_1st_cstr = int(content[1])
         rhs_2nd_cstr = int(content[2])
-        objective1 = split_int(content[3])
-        objective2 = split_int(content[4])
-        weights_1st_cstr = split_int(content[5])
-        weights_2nd_cstr = split_int(content[6])
+        objective1 = split_numeric(content[3])
+        objective2 = split_numeric(content[4])
+        weights_1st_cstr = split_numeric(content[5])
+        weights_2nd_cstr = split_numeric(content[6])
 
         return cls(
             num_binaries,
@@ -142,8 +146,8 @@ class Bomip2ap(pyo.ConcreteModel):
             content = tfile.readlines()
 
         num_jobs = int(content[0])
-        obj1 = to_array(content[1], (num_jobs, num_jobs))
-        obj2 = to_array(content[2], (num_jobs, num_jobs))
+        obj1 = to_array(content[1], shape=(num_jobs, num_jobs))
+        obj2 = to_array(content[2], shape=(num_jobs, num_jobs))
 
         return cls(num_jobs, obj1, obj2)
 
@@ -181,7 +185,7 @@ class Bomip2C(pyo.ConcreteModel):
         self.b = pyo.Param(self.zero_to_m_idx, initialize=b)
 
         self.x = pyo.Var(self.binary_idx, domain=pyo.Boolean)
-        self.y = pyo.Var(self.continouos_idx, domain=pyo.PositiveReals)
+        self.y = pyo.Var(self.continouos_idx, domain=pyo.NonNegativeReals)
 
         def first_cstr_rule(model, j):
             lhs = (
@@ -222,7 +226,7 @@ class Bomip2C(pyo.ConcreteModel):
 
         # Line detection part
         # line detection constraints
-        self.y2 = pyo.Var(self.continouos_idx, domain=pyo.PositiveReals)
+        self.y2 = pyo.Var(self.continouos_idx, domain=pyo.NonNegativeReals)
 
         def first_cstr_rule2(model, j):
             lhs = (
@@ -273,19 +277,19 @@ class Bomip2C(pyo.ConcreteModel):
         num_continuous = int(content[1])
         num_binaries = int(content[2])
 
-        c1 = split_int(content[3])
-        f1 = split_int(content[4])
-        c2 = split_int(content[5])
-        f2 = split_int(content[6])
+        c1 = split_numeric(content[3])
+        f1 = split_numeric(content[4])
+        c2 = split_numeric(content[5])
+        f2 = split_numeric(content[6])
 
         a = {}
         for i in range(num_continuous):
             for j in range(m - 1):
-                a[i, j] = split_int(content[7 + i])[j]
+                a[i, j] = split_numeric(content[7 + i])[j]
 
         checkpoint = 7 + num_continuous
-        a_prime = split_int(content[checkpoint])
-        b = split_int(content[checkpoint + 1])
+        a_prime = split_numeric(content[checkpoint])
+        b = split_numeric(content[checkpoint + 1])
 
         return cls(m, num_binaries, num_continuous, c1, f1, c2, f2, a, a_prime, b)
 
@@ -304,7 +308,7 @@ class Bomip2buflp(pyo.ConcreteModel):
         self.zones = pyo.RangeSet(0, self.nd - 1)
 
         self.x = pyo.Var(self.facilities, within=pyo.Boolean)
-        self.y = pyo.Var(self.zones, self.facilities, within=pyo.PositiveReals)
+        self.y = pyo.Var(self.zones, self.facilities, within=pyo.NonNegativeReals)
 
         def first_cstr_rule(model, i):
             return sum(model.y[i, j] for j in model.facilities) == 1
@@ -317,13 +321,13 @@ class Bomip2buflp(pyo.ConcreteModel):
         self.cstr2 = pyo.Constraint(self.zones, self.facilities, rule=second_cstr_rule)
 
         self.objective1 = pyo.Objective(
-            expr=pyo.summation(self.c1, self.y) + pyo.summation(self.f, self.x)
+            expr=pyo.summation(c1, self.y) + pyo.summation(f, self.x)
         )
 
-        self.objective2 = pyo.Objective(expr=pyo.summation(self.c2, self.y))
+        self.objective2 = pyo.Objective(expr=pyo.summation(c2, self.y))
 
         # part for line detection
-        self.y2 = pyo.Var(self.zones, self.facilities, within=pyo.PositiveReals)
+        self.y2 = pyo.Var(self.zones, self.facilities, within=pyo.NonNegativeReals)
 
         def first_cstr_rule2(model, i):
             return sum(model.y2[i, j] for j in model.facilities) == 1
@@ -338,10 +342,10 @@ class Bomip2buflp(pyo.ConcreteModel):
         )
 
         self.objective1_2 = pyo.Objective(
-            expr=pyo.summation(self.c1, self.y2) + pyo.summation(self.f, self.x)
+            expr=pyo.summation(c1, self.y2) + pyo.summation(f, self.x)
         )
 
-        self.objective2_2 = pyo.Objective(expr=pyo.summation(self.c2, self.y2))
+        self.objective2_2 = pyo.Objective(expr=pyo.summation(c2, self.y2))
 
         self.cstr1_2.deactivate()
         self.cstr2_2.deactivate()
@@ -353,11 +357,11 @@ class Bomip2buflp(pyo.ConcreteModel):
         with open(instance_path) as tfile:
             content = tfile.readlines()
 
-        nf = content[0]
-        nd = content[1]
+        nf = int(content[0])
+        nd = int(content[1])
 
-        c1 = to_array(content[2], (nd, nf))
-        f = split_int(content[3])
-        c2 = to_array(content[4], (nd, nf))
+        c1 = to_array(content[2:52], ntype=float)
+        f = split_numeric(content[52])
+        c2 = to_array(content[53:103], ntype=float)
 
         return cls(nf, nd, c1, c2, f)

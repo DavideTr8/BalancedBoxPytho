@@ -1,11 +1,14 @@
+from os import getenv
 from copy import deepcopy
-import logging
 
 import pyomo.environ as pyo
 
 from shapes.rectangle import Rectangle
 from shapes.shapee import Shape
 from shapes.Point import Point
+from utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def find_lexmin(
@@ -45,9 +48,7 @@ def find_lexmin(
                 expr=model_copy.objective1.expr <= shape.botright[0]
             )
 
-        logging.info(
-            f"Solving the first problem in lexmin with order {objective_order}"
-        )
+        logger.info(f"Solving the first problem in lexmin with order {objective_order}")
         opt.solve(model_copy, tee=verbose)
 
         model_copy.objective_constraint = pyo.Constraint(
@@ -56,7 +57,7 @@ def find_lexmin(
 
         model_copy.objective1.deactivate()
         model_copy.objective2.activate()
-        logging.info(
+        logger.info(
             f"Solving the second problem in lexmin with order {objective_order}"
         )
         opt.solve(model_copy, tee=verbose)
@@ -73,9 +74,7 @@ def find_lexmin(
             expr=model_copy.objective1.expr <= shape.botright[0]
         )
 
-        logging.info(
-            f"Solving the first problem in lexmin with order {objective_order}"
-        )
+        logger.info(f"Solving the first problem in lexmin with order {objective_order}")
         opt.solve(model_copy, tee=verbose)
 
         model_copy.objective_constraint = pyo.Constraint(
@@ -85,7 +84,7 @@ def find_lexmin(
         model_copy.objective2.deactivate()
         model_copy.objective1.activate()
 
-        logging.info(
+        logger.info(
             f"Solving the second problem in lexmin with order {objective_order}"
         )
         opt.solve(model_copy, tee=verbose)
@@ -102,7 +101,7 @@ def weighted_sum(
     opt: pyo.SolverFactory,
     z_cap=None,
 ):
-    EPS = 1e-4
+    EPS_WS = float(getenv("EPS_WS", default=1e-4))
     model_copy = deepcopy(model)
 
     z1 = rectangle.topleft
@@ -127,7 +126,15 @@ def weighted_sum(
         expr=model_copy.objective1.expr <= rectangle.botright[0]
     )
 
-    logging.info(f"Solving the weighted sum model.")
+    model_copy.ztop_cstr_y2 = pyo.Constraint(
+        expr=model_copy.objective2.expr >= rectangle.botright[1]
+    )
+
+    model_copy.zbot_cstr_x2 = pyo.Constraint(
+        expr=model_copy.objective1.expr >= rectangle.topleft[0]
+    )
+
+    logger.info(f"Solving the weighted sum model.")
     opt.solve(model_copy)
 
     if z_cap is None:
@@ -138,11 +145,14 @@ def weighted_sum(
         )
         if z_star not in z_cap:
             z_cap.append(z_star)
-        if pyo.value(model_copy.weighted_obj) < lambda1 * z1[0] + lambda2 * z1[1] - EPS:
-            logging.warning(
+        if (
+            pyo.value(model_copy.weighted_obj)
+            < lambda1 * z1[0] + lambda2 * z1[1] - EPS_WS
+        ):
+            logger.debug(
                 f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z1[0] + lambda2 * z1[1]}"
             )
-            logging.warning(
+            logger.debug(
                 f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z2[0] + lambda2 * z2[1]}"
             )
 
@@ -182,7 +192,8 @@ def line_detector(model, opt, triangle):
     model_copy.objective1.deactivate()
     model_copy.objective2.deactivate()
     model_copy.dummy_obj.activate()
-    logging.info(f"Solving the line detector model.")
+
+    logger.info(f"Solving the line detector model.")
     res = opt.solve(model_copy)
 
     feasible = (

@@ -4,12 +4,12 @@ from pathlib import Path
 home_path = Path("/home/da_orobix/PycharmProjects/BalancedBoxPython")
 actual_sol_path = (
     home_path
-    / "BOMIP/Part II- Mixed Integer Programs/nondominated frontiers/After post-processing/First problem/"
+    / "BOMIP/Part II- Mixed Integer Programs/nondominated frontiers/Before post-processing/Second problem (BUFLP)/"
 )
-my_sol_path = home_path / "my_solutions" / "First problem"
+my_sol_path = home_path / "my_solutions" / "Second problem (BUFLP)"
 
-solution_name = "3out.txt"
-solution_path = actual_sol_path / "C20" / solution_name
+solution_name = "1dat.txt"
+solution_path = my_sol_path / "C16" / solution_name
 scatter_style = {
     "s": 2,
 }
@@ -27,5 +27,5 @@ with open(solution_path, "r") as rfile:
 
 plotter.plot_solutions(
     solution_dict,
-    save_path=actual_sol_path / "C20" / solution_name.replace("txt", "png"),
+    save_path=my_sol_path / "C16" / solution_name.replace("txt", "png"),
 )

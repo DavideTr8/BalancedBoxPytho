@@ -13,7 +13,7 @@ class Writer:
         if self.problem_type == "max":
             sol_list = [(-x[0], -x[1], solutions_dict[x]) for x in solutions_dict]
         else:
-            sol_list = [(-x[0], -x[1], solutions_dict[x]) for x in solutions_dict]
+            sol_list = [(x[0], x[1], solutions_dict[x]) for x in solutions_dict]
 
         with open(self.solution_path, "w") as sfile:
             for sol in sol_list:

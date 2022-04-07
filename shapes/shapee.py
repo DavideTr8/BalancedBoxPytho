@@ -1,3 +1,4 @@
+import logging
 import math
 from shapes.Point import Point
 
@@ -17,8 +18,8 @@ class Shape:
             self.topleft = topleft
             self.botright = botright
         else:
-            self.topleft = botright
-            self.botright = topleft
+            logging.warning("Topleft and botright were inverted.")
+            raise ValueError("Topleft and botright were inverted.")
 
     def __lt__(self, other):
         return self.area < other.area
