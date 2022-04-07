@@ -12,8 +12,11 @@ def to_array(lines: list[str], shape=None, ntype=int) -> np.array:
     if isinstance(lines, list):
         as_list = [split_numeric(line, ntype) for line in lines]
     else:
-        as_list = split_numeric(lines, shape, ntype)
-    return np.array(as_list)
+        as_list = split_numeric(lines, ntype)
+    as_array = np.array(as_list)
+    if shape is not None:
+        as_array = np.reshape(as_array, shape)
+    return as_array
 
 
 class Bomip2dkp:
