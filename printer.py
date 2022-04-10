@@ -9,7 +9,7 @@ class Writer:
         self.problem_type = problem_type
         self.solution_path = solution_path
 
-    def print_solution(self, solutions_dict):
+    def print_solution(self, solutions_dict, tot_time=None, iterations=None):
         if self.problem_type == "max":
             sol_list = [(-x[0], -x[1], solutions_dict[x]) for x in solutions_dict]
         else:
@@ -18,6 +18,10 @@ class Writer:
         with open(self.solution_path, "w") as sfile:
             for sol in sol_list:
                 sfile.write(f"{sol[0]}\t{sol[1]}\t{sol[2]}\n")
+            if tot_time is not None:
+                sfile.write(f"Time={tot_time}\n")
+            if iterations is not None:
+                sfile.write(f"Iterations={iterations}\n")
 
 
 class Plotter:
@@ -27,7 +31,7 @@ class Plotter:
         self.scatter_style = scatter_style
 
     def plot_solutions(self, sol_dict, save_path=None):
-        plt.figure(0)
+        plt.figure()
         plt.scatter(
             [x[0] for x in sol_dict], [x[1] for x in sol_dict], **self.scatter_style
         )
@@ -43,3 +47,4 @@ class Plotter:
             plt.savefig(save_path, dpi=self.resolution)
         else:
             plt.show()
+        plt.clf()

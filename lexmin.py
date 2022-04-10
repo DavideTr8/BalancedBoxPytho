@@ -1,3 +1,4 @@
+import logging
 from os import getenv
 from copy import deepcopy
 
@@ -34,6 +35,7 @@ def find_lexmin(
     :return: Point
     """
     model_copy = deepcopy(model)
+    model_copy.name = "Lexmin"
 
     if objective_order == (1, 2):
         model_copy.objective1.activate()
@@ -43,10 +45,14 @@ def find_lexmin(
             expr=model_copy.objective2.expr <= shape.topleft[1]
         )
 
-        if isinstance(shape, Rectangle):
-            model_copy.zbot_cstr_x = pyo.Constraint(
-                expr=model_copy.objective1.expr <= shape.botright[0]
-            )
+        # if isinstance(shape, Rectangle):
+        model_copy.zbot_cstr_x = pyo.Constraint(
+            expr=model_copy.objective1.expr <= shape.botright[0]
+        )
+
+        model_copy.ztop_cstr_x = pyo.Constraint(
+            expr=model_copy.objective1.expr >= shape.topleft[0]
+        )
 
         logger.info(f"Solving the first problem in lexmin with order {objective_order}")
         opt.solve(model_copy, tee=verbose)
@@ -54,24 +60,29 @@ def find_lexmin(
         model_copy.objective_constraint = pyo.Constraint(
             expr=model_copy.objective1.expr <= pyo.value(model_copy.objective1)
         )
+        logger.debug(f"Additional constraint z1 <= {pyo.value(model_copy.objective1)}")
 
         model_copy.objective1.deactivate()
         model_copy.objective2.activate()
         logger.info(
             f"Solving the second problem in lexmin with order {objective_order}"
         )
-        opt.solve(model_copy, tee=verbose)
+        res = opt.solve(model_copy, tee=verbose)
 
     elif objective_order == (2, 1):
         model_copy.objective2.activate()
         model_copy.objective1.deactivate()
 
-        if isinstance(shape, Rectangle):
-            model_copy.ztop_cstr_y = pyo.Constraint(
-                expr=model_copy.objective2.expr <= shape.topleft[1]
-            )
+        # if isinstance(shape, Rectangle):
+        model_copy.ztop_cstr_y = pyo.Constraint(
+            expr=model_copy.objective2.expr <= shape.topleft[1]
+        )
         model_copy.zbot_cstr_x = pyo.Constraint(
             expr=model_copy.objective1.expr <= shape.botright[0]
+        )
+
+        model_copy.zbot_cstr_y = pyo.Constraint(
+            expr=model_copy.objective2.expr >= shape.botright[1]
         )
 
         logger.info(f"Solving the first problem in lexmin with order {objective_order}")
@@ -80,6 +91,7 @@ def find_lexmin(
         model_copy.objective_constraint = pyo.Constraint(
             expr=model_copy.objective2.expr <= pyo.value(model_copy.objective2)
         )
+        logger.debug(f"Additional constraint z2 <= {pyo.value(model_copy.objective2)}")
 
         model_copy.objective2.deactivate()
         model_copy.objective1.activate()
@@ -87,10 +99,13 @@ def find_lexmin(
         logger.info(
             f"Solving the second problem in lexmin with order {objective_order}"
         )
-        opt.solve(model_copy, tee=verbose)
+        res = opt.solve(model_copy, tee=verbose)
 
     else:
         raise ValueError("The objective order provided isn't accepted")
+
+    if res.Solver.Termination_condition != "optimal":
+        raise ValueError("Solution not found.")
 
     return Point((pyo.value(model_copy.objective1), pyo.value(model_copy.objective2)))
 
@@ -103,6 +118,7 @@ def weighted_sum(
 ):
     EPS_WS = float(getenv("EPS_WS", default=1e-4))
     model_copy = deepcopy(model)
+    model_copy.name = "WeightedSum"
 
     z1 = rectangle.topleft
     z2 = rectangle.botright
@@ -140,26 +156,29 @@ def weighted_sum(
     if z_cap is None:
         z_cap = [z1, z2]
     if model_copy.solutions.solutions:
-        z_star = Point(
-            (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
-        )
-        if z_star not in z_cap:
-            z_cap.append(z_star)
-        if (
-            pyo.value(model_copy.weighted_obj)
-            < lambda1 * z1[0] + lambda2 * z1[1] - EPS_WS
-        ):
-            logger.debug(
-                f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z1[0] + lambda2 * z1[1]}"
+        try:
+            z_star = Point(
+                (pyo.value(model_copy.objective1), pyo.value(model_copy.objective2))
             )
-            logger.debug(
-                f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z2[0] + lambda2 * z2[1]}"
-            )
+            if z_star not in z_cap:
+                z_cap.append(z_star)
+            if (
+                pyo.value(model_copy.weighted_obj)
+                < lambda1 * z1[0] + lambda2 * z1[1] - EPS_WS
+            ):
+                logger.debug(
+                    f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z1[0] + lambda2 * z1[1]}"
+                )
+                logger.debug(
+                    f"{pyo.value(model_copy.weighted_obj)} < {lambda1 * z2[0] + lambda2 * z2[1]}"
+                )
 
-            r1 = Rectangle(z1, z_star)
-            r2 = Rectangle(z_star, z2)
-            z_cap = weighted_sum(model, r1, opt, z_cap=z_cap)
-            z_cap = weighted_sum(model, r2, opt, z_cap=z_cap)
+                r1 = Rectangle(z1, z_star)
+                r2 = Rectangle(z_star, z2)
+                z_cap = weighted_sum(model, r1, opt, z_cap=z_cap)
+                z_cap = weighted_sum(model, r2, opt, z_cap=z_cap)
+        except ValueError:
+            logging.warning("Solution not found in weighted sum method.")
 
     z_cap.sort(key=lambda x: x[0])
     return z_cap
@@ -167,6 +186,7 @@ def weighted_sum(
 
 def line_detector(model, opt, triangle):
     model_copy = deepcopy(model)
+    model_copy.name = "LineDetector"
     model_copy.gamma = pyo.Var(domain=pyo.PositiveReals)
     model_copy.dummy_obj = pyo.Objective(expr=model_copy.gamma)
 
@@ -196,9 +216,12 @@ def line_detector(model, opt, triangle):
     logger.info(f"Solving the line detector model.")
     res = opt.solve(model_copy)
 
-    feasible = (
+    connected = (
         res.Solver.Termination_condition == "optimal"
-        and pyo.value(model_copy.gamma) == 0
+        and pyo.value(model_copy.gamma) <= 1e-6
+    )
+    logger.debug(
+        f"Solver status: {res.Solver.Termination_condition}\n" f"Connected? {connected}"
     )
 
-    return feasible
+    return connected

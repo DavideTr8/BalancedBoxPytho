@@ -4,9 +4,9 @@ from queue import PriorityQueue
 from shapes.rectangle import Rectangle
 from shapes.triangle import Triangle
 from pathlib import Path
-import logging
-from utils import dist, SelfOrderingDict, get_logger
+from utils import SelfOrderingDict, get_logger, dist
 from printer import Writer
+import time
 
 import os
 
@@ -16,7 +16,7 @@ EPS_SPLIT = float(
     os.getenv("EPS_SPLIT", default=1e-3)
 )  # epsilon for when splitting a rectangle
 EPS_AREA = float(os.getenv("EPS_AREA", default=1e-2))
-distance_eps = 0.1
+distance_eps = 1e-5
 DATASET_PATH = Path(
     os.getenv(
         "DATASET_PATH", default="./BOMIP/Part II- Mixed Integer Programs/instances/"
@@ -49,6 +49,7 @@ def main(problem, problem_class, instance):
     opt.options["MIPGap"] = os.getenv("MIPGAP", default=1e-4)
     opt.options["NumericFocus"] = 3
 
+    tic = time.perf_counter()
     z_T = find_lexmin(model, (1, 2), opt)
     z_B = find_lexmin(model, (2, 1), opt)
 
@@ -100,50 +101,56 @@ def main(problem, problem_class, instance):
         if splitting_direction == 0:
             logger.debug("The splitting direction is horizontal.")
             _, t_b = searching_shape.split_horizontally()
-            z1_bar = find_lexmin(model, (1, 2), opt, t_b)
-            logger.debug(f"Found z1_bar: {z1_bar}")
-            if abs(z1_bar[1] - t_b.topleft[1]) < EPS_SPLIT:
+            try:
+                z1_bar = find_lexmin(model, (1, 2), opt, t_b)
+                logger.debug(f"Found z1_bar: {z1_bar}")
+            except ValueError:
+                z1_bar = z2
+
+            if abs(z1_bar[1] - t_b.topleft[1]) < distance_eps:
                 logger.debug(f"Since z1_bar is close to {t_b.topleft}, z2_bar=z1_bar.")
                 z2_bar = z1_bar
             else:
                 logger.debug(
                     f"Since z1_bar is far from {t_b.topleft}, we compute z2_bar."
                 )
-                t_t = Triangle(z1, z1_bar - (EPS_SPLIT, 0))
-                z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
-                logger.debug(f"Found z2_bar: {z2_bar}")
+                t_t = Triangle(z1, (z1_bar[0] - EPS_SPLIT, t_b.topleft[1]))
+                try:
+                    z2_bar = find_lexmin(model, (2, 1), opt, shape=t_t, verbose=False)
+                    logger.debug(f"Found z2_bar: {z2_bar}")
+                except ValueError:
+                    z2_bar = z1
             logger.debug("Finished splitting.")
         else:
             logger.debug("Splitting direction is vertical.")
             t_t, _ = searching_shape.split_vertically()
-            z2_bar = find_lexmin(model, (2, 1), opt, t_t)
-            logger.debug(f"Found z2_bar: {z2_bar}")
-            if abs(z2_bar[0] - t_t.botright[0]) < EPS_SPLIT:
+            try:
+                z2_bar = find_lexmin(model, (2, 1), opt, t_t)
+                logger.debug(f"Found z2_bar: {z2_bar}")
+            except ValueError:
+                z2_bar = z1
+
+            if abs(z2_bar[0] - t_t.botright[0]) < distance_eps:
                 logger.debug(f"Since z2_bar is close to {t_t.botright}, z1_bar=z2_bar.")
                 z1_bar = z2_bar
             else:
                 logger.debug(
                     f"Since z2_bar is far from {t_t.botright}, we compute z1_bar."
                 )
-                t_b = Triangle(z2_bar - (0, EPS_SPLIT), z2)
+                t_b = Triangle((t_t.botright[0], z2_bar[1] - EPS_SPLIT), z2)
 
-                z1_bar = find_lexmin(model, (1, 2), opt, shape=t_b, verbose=False)
-                logger.debug(f"Found z1_bar: {z1_bar}")
+                try:
+                    z1_bar = find_lexmin(model, (1, 2), opt, shape=t_b, verbose=False)
+                    logger.debug(f"Found z1_bar: {z1_bar}")
+                except ValueError:
+                    z1_bar = z2
 
             logger.debug("Finished splitting.")
-
-        if dist(z1, z1_bar) < distance_eps or dist(z2, z2_bar) < distance_eps:
-            logging.debug(
-                f"Found z1, z1_bar, z2, z2_bar overlapping \n"
-                f"{z1} - {z1_bar} - {z2} - {z2_bar} \n"
-                f"Skipping Rectangle creation."
-            )
-            iteration += 1
-            continue
 
         new_direction = (splitting_direction + 1) % 2
 
         if dist(z2_bar, z1, "M") > distance_eps:
+            # if z2_bar != z1:
             logger.debug("Since z2_bar is far from z1, we compute the rectangle.")
             try:
                 rect = Rectangle(z1, z2_bar)
@@ -158,6 +165,7 @@ def main(problem, problem_class, instance):
                 solutions_dict[z2_bar] = 0
 
         if dist(z1_bar, z2, "M") > distance_eps:
+            # if z1_bar != z2:
             logger.debug("Since z1_bar is far from z2, we compute the rectangle.")
             try:
                 rect = Rectangle(z1_bar, z2)
@@ -171,8 +179,10 @@ def main(problem, problem_class, instance):
                 solutions_dict[z1_bar] = 0
 
         iteration += 1
-        if iteration > 500:
+        if iteration > 800:
             break
 
+    toc = time.perf_counter() - tic
+
     writer = Writer("min", instance_sol_path)
-    writer.print_solution(solutions_dict)
+    writer.print_solution(solutions_dict, tot_time=toc, iterations=iteration)
