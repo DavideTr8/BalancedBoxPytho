@@ -28,7 +28,7 @@ def find_lexmin(
         Order in which to solve the objectives. Can be (1, 2) or (2, 1).
     :param opt: pyo.SolverFactory,
         Solver for the model.
-    :param rectangle: Rectangle,
+    :param shape: Shape,
         Rectange in which the optimization is constrained.
     :param verbose: bool (optional),
         Print the output of the solver.
@@ -187,7 +187,7 @@ def weighted_sum(
 def line_detector(model, opt, triangle):
     model_copy = deepcopy(model)
     model_copy.name = "LineDetector"
-    model_copy.gamma = pyo.Var(domain=pyo.PositiveReals)
+    model_copy.gamma = pyo.Var(domain=pyo.NonNegativeReals)
     model_copy.dummy_obj = pyo.Objective(expr=model_copy.gamma)
 
     for cstr in model_copy.component_objects(pyo.Constraint):

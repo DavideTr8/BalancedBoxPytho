@@ -22,7 +22,8 @@ def dist(z1, z2, name="E"):
 
 def get_logger(
     name: str,
-    message_fmt: str = "[%(blue)s%(asctime)s%(reset)s][%(cyan)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s",
+    message_fmt: str = "[%(blue)s%(asctime)s%(reset)s][%(cyan)s%(name)s%(reset)s][%(log_color)s%(levelname)s%("
+    "reset)s] - %(message)s",
 ) -> logging.Logger:
     formatter = ColoredFormatter(
         message_fmt,

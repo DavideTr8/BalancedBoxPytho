@@ -28,7 +28,7 @@ def main(problem, problem_class, instance):
     instance_path = Path.cwd() / DATASET_PATH / problem / problem_class / instance
 
     if problem == "2DKP":
-        problem = Bomip2dkp.from_file(instance_path)
+        model = Bomip2dkp.from_file(instance_path)
     elif problem == "AP":
         model = Bomip2ap.from_file(instance_path)
     else:

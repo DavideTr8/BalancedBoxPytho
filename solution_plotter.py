@@ -10,11 +10,11 @@ actual_sol_path = (
 my_sol_path = home_path / "my_solutions"
 my_images = home_path / "images"
 
-problem_name = "Second problem (BUFLP)"
-instance_name = "C25"
+problem_name = "First problem"
+instance_name = "C160"
 
 
-for solution_num in range(7, 9):
+for solution_num in range(16, 21):
     solution_num = str(solution_num)
     actual_path_full = (
         actual_sol_path / problem_name / instance_name / (solution_num + "out.txt")

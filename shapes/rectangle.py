@@ -1,13 +1,14 @@
 from shapes.shapee import Shape
 import math
 from shapes.Point import Point
+from typing import Union
 
 
 class Rectangle(Shape):
     def __init__(
         self,
-        topleft: Point = Point((-math.inf, math.inf)),
-        botright: Point = Point((math.inf, -math.inf)),
+        topleft: Union[tuple, Point] = Point((-math.inf, math.inf)),
+        botright: Union[tuple, Point] = Point((math.inf, -math.inf)),
     ):
         super().__init__(topleft, botright)
 

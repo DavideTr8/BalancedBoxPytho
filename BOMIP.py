@@ -16,7 +16,7 @@ EPS_SPLIT = float(
     os.getenv("EPS_SPLIT", default=1e-3)
 )  # epsilon for when splitting a rectangle
 EPS_AREA = float(os.getenv("EPS_AREA", default=1e-2))
-distance_eps = 1e-5
+EPS_DISTANCE = 1e-5
 DATASET_PATH = Path(
     os.getenv(
         "DATASET_PATH", default="./BOMIP/Part II- Mixed Integer Programs/instances/"
@@ -107,7 +107,7 @@ def main(problem, problem_class, instance):
             except ValueError:
                 z1_bar = z2
 
-            if abs(z1_bar[1] - t_b.topleft[1]) < distance_eps:
+            if abs(z1_bar[1] - t_b.topleft[1]) < EPS_DISTANCE:
                 logger.debug(f"Since z1_bar is close to {t_b.topleft}, z2_bar=z1_bar.")
                 z2_bar = z1_bar
             else:
@@ -130,7 +130,7 @@ def main(problem, problem_class, instance):
             except ValueError:
                 z2_bar = z1
 
-            if abs(z2_bar[0] - t_t.botright[0]) < distance_eps:
+            if abs(z2_bar[0] - t_t.botright[0]) < EPS_DISTANCE:
                 logger.debug(f"Since z2_bar is close to {t_t.botright}, z1_bar=z2_bar.")
                 z1_bar = z2_bar
             else:
@@ -149,7 +149,7 @@ def main(problem, problem_class, instance):
 
         new_direction = (splitting_direction + 1) % 2
 
-        if dist(z2_bar, z1, "M") > distance_eps:
+        if dist(z2_bar, z1, "M") > EPS_DISTANCE:
             # if z2_bar != z1:
             logger.debug("Since z2_bar is far from z1, we compute the rectangle.")
             try:
@@ -164,7 +164,7 @@ def main(problem, problem_class, instance):
                 pq.put((-rect.area, rect, new_direction))
                 solutions_dict[z2_bar] = 0
 
-        if dist(z1_bar, z2, "M") > distance_eps:
+        if dist(z1_bar, z2, "M") > EPS_DISTANCE:
             # if z1_bar != z2:
             logger.debug("Since z1_bar is far from z2, we compute the rectangle.")
             try:
@@ -179,7 +179,7 @@ def main(problem, problem_class, instance):
                 solutions_dict[z1_bar] = 0
 
         iteration += 1
-        if iteration > 800:
+        if iteration > 1000:
             break
 
     toc = time.perf_counter() - tic

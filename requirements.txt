@@ -28,3 +28,5 @@ six==1.16.0
 toml==0.10.2
 tomli==2.0.1
 virtualenv==20.13.1
+
+colorlog~=6.6.0

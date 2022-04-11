@@ -27,11 +27,11 @@ else:
     problem_type = BOMIP
     if args.problem == "First problem":
         instances = {
-            "C20": ["1dat.txt", "2dat.txt", "3dat.txt", "4dat.txt", "5dat.txt"],
-            "C40": ["6dat.txt", "7dat.txt", "8dat.txt", "9dat.txt", "10dat.txt"],
-            "C80": ["11dat.txt", "12dat.txt", "13dat.txt", "14dat.txt", "15dat.txt"],
+            # "C20": ["1dat.txt", "2dat.txt", "3dat.txt", "4dat.txt", "5dat.txt"],
+            # "C40": ["6dat.txt", "7dat.txt", "8dat.txt", "9dat.txt", "10dat.txt"],
+            # "C80": ["11dat.txt", "12dat.txt", "13dat.txt", "14dat.txt", "15dat.txt"],
             "C160": ["16dat.txt", "17dat.txt", "18dat.txt", "19dat.txt", "20dat.txt"],
-            "C320": ["21dat.txt", "22dat.txt", "23dat.txt", "24dat.txt", "25dat.txt"],
+            # "C320": ["21dat.txt", "22dat.txt", "23dat.txt", "24dat.txt", "25dat.txt"],
         }
     else:
         instances = {

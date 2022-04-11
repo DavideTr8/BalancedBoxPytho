@@ -1,13 +1,14 @@
 import logging
 import math
 from shapes.Point import Point
+from typing import Union
 
 
 class Shape:
     def __init__(
         self,
-        topleft: Point = Point((-math.inf, math.inf)),
-        botright: Point = Point((math.inf, -math.inf)),
+        topleft: Union[tuple, Point] = Point((-math.inf, math.inf)),
+        botright: Union[tuple, Point] = Point((math.inf, -math.inf)),
     ):
         if isinstance(topleft, tuple):
             topleft = Point(topleft)
